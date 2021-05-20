@@ -1,0 +1,380 @@
+options:
+	#This is the version of the plugin that you are using.
+	version: 3.3.4
+	#Do not change this
+	databasePrefix: jdogdatabase_
+	#If player does not have a permission, it will tell them this.
+	nopermission: &cNo Permission.
+	
+	
+on script load:
+	set {_prefix} to yaml value "Prefix" from file "../SaveFiles/Workers/config.yml"
+	if {_prefix} is not set:
+		message "--------------------------" to console
+		message "Workers {@version} Loaded" to console
+		message "--------------------------" to console
+		set yaml value "Prefix" from file "../SaveFiles/Workers/config.yml" to "&7[&e&lWorkers&7]&f"
+		
+on join:
+	set {{@databasePrefix}UUIDINFO.%player%} to "%player's uuid%"
+	set {{@databasePrefix}UUIDINFO.%player's uuid%} to "%player%"
+	
+command /workers [<text>] [<text>]:
+	permission: workers.workers
+	permission message: {@nopermission}
+	aliases: worker
+	trigger:
+		set {_prefix} to yaml value "Prefix" from file "../SaveFiles/Workers/config.yml"
+		if arg 1 is not set:
+			open chest with 3 rows named "Workers" to player
+			wait 1 tick
+			format slot 12 of player with chest named "&eCollection Bin" to close then run [make player execute command "workers bin"]
+			format slot 14 of player with lever named "&aYour Workers" to close then run [make player execute command "myworkers"]
+		if arg 1 is set:
+			add "sand" to {_checks::*}
+			set {_name.sand} to "Sand"
+			set {_icon.sand} to 1 sand
+			add "cobble" to {_checks::*}
+			set {_name.cobble} to "Cobble"
+			set {_icon.cobble} to 1 cobble
+			add "coal" to {_checks::*}
+			set {_name.coal} to "Coal"
+			set {_icon.coal} to 1 coal item
+			add "iron ingot" to {_checks::*}
+			set {_name.iron ingot} to "Iron Ingot"
+			set {_icon.iron ingot} to 1 iron ingot
+			add "gold ingot" to {_checks::*}
+			set {_name.gold ingot} to "Gold Ingot"
+			set {_icon.gold ingot} to 1 gold ingot
+			add "redstone" to {_checks::*}
+			set {_name.redstone} to "Redstone"
+			set {_icon.redstone} to 1 redstone
+			add "lapis" to {_checks::*}
+			set {_name.lapis} to "Lapis"
+			set {_icon.lapis} to 1 lapis
+			add "diamond" to {_checks::*}
+			set {_name.diamond} to "Diamond"
+			set {_icon.diamond} to 1 diamond
+			add "emerald" to {_checks::*}
+			set {_name.emerald} to "Emerald"
+			set {_icon.emerald} to 1 emerald
+			add "oak" to {_checks::*}
+			set {_name.oak} to "Oak Log"
+			set {_icon.oak} to 1 oak log:0
+			add "spruce" to {_checks::*}
+			set {_name.spruce} to "Spruce Log"
+			set {_icon.spruce} to 1 spruce log:1
+			add "birch" to {_checks::*}
+			set {_name.birch} to "Birch Log"
+			set {_icon.birch} to 1 birch log:2
+			add "jungle" to {_checks::*}
+			set {_name.jungle} to "Jungle Log"
+			set {_icon.jungle} to 1 jungle log:3
+			add "acacia" to {_checks::*}
+			set {_name.acacia} to "Acacia Log"
+			set {_icon.acacia} to 1 acacia log:0
+			add "darkoak" to {_checks::*}
+			set {_name.darkoak} to "Dark Oak Log"
+			set {_icon.darkoak} to 1 dark oak log:1
+			loop {_checks::*}:
+				set {_check.%loop-value%} to yaml value "Collect.%loop-value%" from file "../SaveFiles/Workers/PlayerInfo/%player's uuid%.yml"
+				if {_check.%loop-value%} is not set:
+					set {_check.%loop-value%} to false
+				if {_check.%loop-value%} is less than 1:
+					set {_check.%loop-value%} to false
+			if arg 1 is "bin":
+				set {_slot} to -1
+				wait 3 ticks
+				open chest with 4 rows named "Workers" to player
+				wait 1 tick
+				loop {_checks::*}:
+					if {_check.%loop-value%} is not false:
+						add 1 to {_slot}
+						format slot {_slot} of player with {_icon.%loop-value%} named "&e%colored {_name.%loop-value%}%" with lore "&bYou have &e%{_check.%loop-value%}% &bto collect!||&7&oClick to collect." to close then run "wsudo %player% workers collect %loop-value%"
+			if arg 1 is "collect":
+				if {_icon.%arg 2%} is not set:
+					message "&cUnknown Item."
+					make player execute command "/workers bin"
+					stop
+				set {_item} to {_icon.%arg 2%}
+				if {_check.%arg 2%} is not set:
+					set {_check.%arg 2%} to 0
+				if {_check.%arg 2%} is less than 1:
+					message "&cYou have no items to collect."
+					stop
+				loop {_check.%arg 2%} times:
+					if player's inventory can't hold {_item}:
+						message "&cYour Inventory is full."
+						stop
+					give player {_item}
+					add 1 to {_remove}
+					set yaml value "Collect.%arg 2%" from file "../SaveFiles/Workers/PlayerInfo/%player's uuid%.yml" to {_check.%arg 2%}-{_remove}
+				make player execute command "/workers bin"
+				
+command /giveworker [<offlineplayer>] [<text>] [<integer>]:
+	permission: workers.giveworker
+	permission message: {@nopermission}
+	trigger:
+		set {_prefix} to yaml value "Prefix" from file "../SaveFiles/Workers/config.yml"
+		if arg 1 is not set:
+			message "%{_prefix}% &e/giveworker <player> <type> <seconds>"
+			message "%{_prefix}% &6Types&7: &fSand, Cobble, Ore, Wood"
+			stop
+		if arg 1 is set:
+			if arg 2 is not "sand" or "cobble" or "ore" or "wood":
+				message "&cUnknown worker type."
+				stop
+			if arg 2 is not set:
+				make player execute command "/giveworker"
+				stop
+			if arg 3 is not set:
+				make player execute command "/giveworker"
+				stop
+			if arg 3 is set:
+				if arg 2 is "sand":
+					set {_arg 2} to "sand"
+				if arg 2 is "cobble":
+					set {_arg 2} to "cobble"
+				if arg 2 is "ore":
+					set {_arg 2} to "ore"
+				if arg 2 is "wood":
+					set {_arg 2} to "wood"
+				add integer-argument to yaml list "Workers.%{_arg 2}%" from file "../SaveFiles/Workers/PlayerInfo/%offlineplayer-argument's uuid%.yml"
+				message "%{_prefix}% &eYou gave &b%arg 1% &e1x &b%integer-argument/60% minute &e%{_arg 2}% Worker"
+				message "%{_prefix}% &eYou received &e1x &b%integer-argument/60% minute &e%{_arg 2}% Worker" to offlineplayer-argument
+				
+command /removeworker [<offlineplayer>] [<text>] [<integer>]:
+	permission: workers.admin
+	permission message: {@nopermission}
+	trigger:	
+		set {_prefix} to yaml value "Prefix" from file "../SaveFiles/Workers/config.yml"
+		if arg 1 is not set:			
+			message "&e/removeworker <player> <type> <delay>"
+			stop
+		if arg 1 is set:
+			if arg 2 is not set:
+				make player execute command "/removeworker"
+				stop
+			if arg 2 is not "sand" or "cobble" or "ore" or "wood":
+				message "&cUnknown worker type."
+				stop
+			if arg 3 is not set:
+				make player execute command "/removeworker"
+				stop
+			if arg 3 is set:
+				if arg 2 is "sand":
+					set {_arg 2} to "sand"
+				if arg 2 is "cobble":
+					set {_arg 2} to "cobble"
+				if arg 2 is "ore":
+					set {_arg 2} to "ore"
+				if arg 2 is "wood":
+					set {_arg 2} to "wood"
+				set {_sandremove::*} to yaml list "Workers.sand" from file "../SaveFiles/Workers/PlayerInfo/%offlineplayer-argument's uuid%.yml"
+				set {_cobbleremove::*} to yaml list "Workers.cobble" from file "../SaveFiles/Workers/PlayerInfo/%offlineplayer-argument's uuid%.yml"
+				set {_oreremove::*} to yaml list "Workers.ore" from file "../SaveFiles/Workers/PlayerInfo/%offlineplayer-argument's uuid%.yml"
+				set {_woodremove::*} to yaml list "Workers.wood" from file "../SaveFiles/Workers/PlayerInfo/%offlineplayer-argument's uuid%.yml"
+				loop {_%{_arg 2}%remove::*}:
+					if loop-value is integer-argument:
+						remove loop-value from yaml list "Workers.%{_arg 2}%" from file "../SaveFiles/Workers/PlayerInfo/%offlineplayer-argument's uuid%.yml"
+						message "%{_prefix}% &eYou removed &b%arg 1%'s &e1x &b%integer-argument/60% minute &e%{_arg 2}% Worker"
+						stop
+command /adminworkers [<text>] [<offlineplayer>] [<integer>]:
+	permission: workers.admin
+	permission message: {@nopermission}
+	trigger:
+		set {_prefix} to yaml value "Prefix" from file "../SaveFiles/Workers/config.yml"
+		if arg 1 is not set:
+			message "&e/adminworkers view <player>"
+			message "&7- &fview a players workers"
+			message "&e/adminworkers work"
+			message "&7- &fview how many things are being created by this skript each minute"
+		if arg 1 is set:
+			if arg 1 is "work":
+				message "&eCalculating... &7&oMay cause lag"
+				loop all players:
+					set {_sand%loop-player%::*} to yaml list "Workers.sand" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+					set {_cobble%loop-player%::*} to yaml list "Workers.cobble" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+					set {_ore%loop-player%::*} to yaml list "Workers.ore" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+					set {_wood%loop-player%::*} to yaml list "Workers.wood" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+					loop {_sand%loop-player%::*}:
+						set {_calc} to loop-value-2
+						add {_calc} to {_total}
+						add {_calc2} to {_total2}
+					loop {_cobble%loop-player%::*}:
+						set {_calc} to loop-value-2
+						add {_calc} to {_total}
+						add {_calc2} to {_total2}
+					loop {_ore%loop-player%::*}:
+						set {_calc} to loop-value-2
+						add {_calc} to {_total}
+						add {_calc2} to {_total2}
+					loop {_wood%loop-player%::*}:
+						set {_calc} to loop-value-2
+						add {_calc} to {_total}
+						add {_calc2} to {_total2}
+				message "&a%{_total}% calculation processes a minute"
+				
+			if arg 1 is "view":
+				open chest with 6 rows named "Workers" to player
+				wait 3 ticks
+				set {_sand::*} to yaml list "Workers.sand" from file "../SaveFiles/Workers/PlayerInfo/%offlineplayer-argument's uuid%.yml"
+				set {_cobble::*} to yaml list "Workers.cobble" from file "../SaveFiles/Workers/PlayerInfo/%offlineplayer-argument's uuid%.yml"
+				set {_ore::*} to yaml list "Workers.ore" from file "../SaveFiles/Workers/PlayerInfo/%offlineplayer-argument's uuid%.yml"
+				set {_wood::*} to yaml list "Workers.wood" from file "../SaveFiles/Workers/PlayerInfo/%offlineplayer-argument's uuid%.yml"
+				wait 1 tick
+				set {_slot} to -1
+				loop {_sand::*}:
+					add 1 to {_slot}
+					if {_slot} is more than 52:
+						format slot 53 of player with barrier named "&e&lTOO MANY WORKERS!" with lore "&cYou have too many workers||&cto fit on this page!" to close
+						stop
+					format slot {_slot} of player with sand named "&e&lSand Worker &c(Click to remove)" with lore "&bDelay&7: &f%loop-value/60% minutes" to close then run "wsudo %player% removeworker %arg 2% sand %loop-value%"
+				loop {_cobble::*}:
+					add 1 to {_slot}
+					if {_slot} is more than 52:
+						format slot 53 of player with barrier named "&e&lTOO MANY WORKERS!" with lore "&cYou have too many workers||&cto fit on this page!" to close
+						stop
+					format slot {_slot} of player with cobblestone named "&7&lCobble Worker &c(Click to remove)" with lore "&bDelay&7: &f%loop-value/60% minutes" to close then run "wsudo %player% removeworker %arg 2% cobble %loop-value%"
+				loop {_ore::*}:
+					add 1 to {_slot}
+					if {_slot} is more than 52:
+						format slot 53 of player with barrier named "&e&lTOO MANY WORKERS!" with lore "&cYou have too many workers||&cto fit on this page!" to close
+						stop
+					format slot {_slot} of player with diamond ore named "&b&lOre Worker &c(Click to remove)" with lore "&bDelay&7: &f%loop-value/60% minutes" to close then run "wsudo %player% removeworker %arg 2% ore %loop-value%"
+				loop {_wood::*}:
+					add 1 to {_slot}
+					if {_slot} is more than 52:
+						format slot 53 of player with barrier named "&e&lTOO MANY WORKERS!" with lore "&cYou have too many workers||&cto fit on this page!" to close
+						stop
+					format slot {_slot} of player with log:0 named "&5&lWood Worker &c(Click to remove)" with lore "&bDelay&7: &f%loop-value/60% minutes" to close then run "wsudo %player% removeworker %arg 2% wood %loop-value%"
+
+	
+every 1 second:
+	loop all players:
+		set {_sand%loop-player%::*} to yaml list "Workers.sand" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+		loop {_sand%loop-player%::*}:
+			set {_item.%loop-value-2%.%loop-player%} to "%loop-value-2%" parsed as integer
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is not set:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to 0
+			add 1 to {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%}
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is more than {_item.%loop-value-2%.%loop-player%}:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to {_item.%loop-value-2%.%loop-player%}
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is {_item.%loop-value-2%.%loop-player%}:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to 0
+				set {_sand%loop-player%} to yaml value "Collect.sand" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+				add 1 to {_sand%loop-player%}
+				set {_sand%loop-player%} to {_sand%loop-player%} parsed as integer
+				set yaml value "Collect.sand" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml" to {_sand%loop-player%}
+		set {_cobble%loop-player%::*} to yaml list "Workers.cobble" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+		loop {_cobble%loop-player%::*}:
+			set {_item.%loop-value-2%.%loop-player%} to "%loop-value-2%" parsed as integer
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is not set:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to 0
+			add 1 to {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%}
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is more than {_item.%loop-value-2%.%loop-player%}:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to {_item.%loop-value-2%.%loop-player%}
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is {_item.%loop-value-2%.%loop-player%}:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to 0
+				set {_cobble%loop-player%} to yaml value "Collect.cobble" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+				add 1 to {_cobble%loop-player%}
+				set {_cobble%loop-player%} to {_cobble%loop-player%} parsed as integer
+				set yaml value "Collect.cobble" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml" to {_cobble%loop-player%}
+		set {_ores%loop-player%::*} to yaml list "Workers.ore" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+		loop {_ores%loop-player%::*}:
+			set {_item.%loop-value-2%.%loop-player%} to "%loop-value-2%" parsed as integer
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is not set:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to 0
+			add 1 to {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%}
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is more than {_item.%loop-value-2%.%loop-player%}:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to {_item.%loop-value-2%.%loop-player%}
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is {_item.%loop-value-2%.%loop-player%}:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to 0
+				set {_ores%loop-player%} to yaml value "Collect.ores" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+				add 1 to {_ores%loop-player%}
+				set {_ores%loop-player%} to {_ores%loop-player%} parsed as integer
+				add "coal" to {_ores::*}
+				add "iron ingot" to {_ores::*}
+				add "gold ingot" to {_ores::*}
+				add "redstone" to {_ores::*}
+				add "lapis" to {_ores::*}
+				add "diamond" to {_ores::*}
+				add "emerald" to {_ores::*}
+				set {_ore} to random element out of {_ores::*}
+				set {_ores%loop-player%} to yaml value "Collect.%{_ore}%" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+				add 1 to {_ores%loop-player%}
+				set yaml value "Collect.%{_ore}%" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml" to {_ores%loop-player%}
+		set {_wood%loop-player%::*} to yaml list "Workers.wood" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+		loop {_wood%loop-player%::*}:
+			set {_item.%loop-value-2%.%loop-player%} to "%loop-value-2%" parsed as integer
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is not set:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to 0
+			add 1 to {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%}
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is more than {_item.%loop-value-2%.%loop-player%}:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to {_item.%loop-value-2%.%loop-player%}
+			if {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} is {_item.%loop-value-2%.%loop-player%}:
+				set {{@databasePrefix}timer.%loop-player%.%{_item.%loop-value-2%.%loop-player%}%} to 0
+				set {_wood%loop-player%} to yaml value "Collect.sand" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+				add 1 to {_wood%loop-player%}
+				set {_wood%loop-player%} to {_wood%loop-player%} parsed as integer
+				add "oak" to {_wood::*}
+				add "spruce" to {_wood::*}
+				add "birch" to {_wood::*}
+				add "jungle" to {_wood::*}
+				add "acacia" to {_wood::*}
+				add "darkoak" to {_wood::*}
+				set {_wood} to random element out of {_wood::*}
+				set {_wood%loop-player%} to yaml value "Collect.%{_wood}%" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml"
+				add 1 to {_wood%loop-player%}
+				set yaml value "Collect.%{_wood}%" from file "../SaveFiles/Workers/PlayerInfo/%loop-player's uuid%.yml" to {_wood%loop-player%} 
+command /myworkers:
+	permission: workers.workers
+	permission message: {@nopermission}
+	trigger:
+		set {_prefix} to yaml value "Prefix" from file "../SaveFiles/Workers/config.yml"
+		wait 3 ticks
+		set {_sand::*} to yaml list "Workers.sand" from file "../SaveFiles/Workers/PlayerInfo/%player's uuid%.yml"
+		set {_cobble::*} to yaml list "Workers.cobble" from file "../SaveFiles/Workers/PlayerInfo/%player's uuid%.yml"
+		set {_ore::*} to yaml list "Workers.ore" from file "../SaveFiles/Workers/PlayerInfo/%player's uuid%.yml"
+		set {_wood::*} to yaml list "Workers.wood" from file "../SaveFiles/Workers/PlayerInfo/%player's uuid%.yml"
+		open chest with 6 rows named "Your Workers" to player
+		wait 1 tick
+		set {_slot} to -1
+		loop {_sand::*}:
+			add 1 to {_slot}
+			if {_slot} is more than 52:
+				format slot 53 of player with barrier named "&e&lTOO MANY WORKERS!" with lore "&cYou have too many workers||&cto fit on this page!" to close
+				stop
+			format slot {_slot} of player with sand named "&e&lSand Worker" with lore "&bDelay&7: &f%loop-value/60% minutes" to close
+		loop {_cobble::*}:
+			add 1 to {_slot}
+			if {_slot} is more than 52:
+				format slot 53 of player with barrier named "&e&lTOO MANY WORKERS!" with lore "&cYou have too many workers||&cto fit on this page!" to close
+				stop
+			format slot {_slot} of player with cobblestone named "&7&lCobble Worker" with lore "&bDelay&7: &f%loop-value/60% minutes" to close
+		loop {_ore::*}:
+			add 1 to {_slot}
+			if {_slot} is more than 52:
+				format slot 53 of player with barrier named "&e&lTOO MANY WORKERS!" with lore "&cYou have too many workers||&cto fit on this page!" to close
+				stop
+			format slot {_slot} of player with diamond ore named "&b&lOre Worker" with lore "&bDelay&7: &f%loop-value/60% minutes" to close
+		loop {_wood::*}:
+			add 1 to {_slot}
+			if {_slot} is more than 52:
+				format slot 53 of player with barrier named "&e&lTOO MANY WORKERS!" with lore "&cYou have too many workers||&cto fit on this page!" to close
+				stop
+			format slot {_slot} of player with log:0 named "&5&lWood Worker" with lore "&bDelay&7: &f%loop-value/60% minutes" to close
+			
+command /wsudo [<player>] [<text>]:
+	permission: adminworkers.sudo
+	permission message: {@nopermission}
+	trigger:
+		if arg 1 is not set:
+			message "&bUsage&7: &e/wsudo <player> <command>"
+		if arg 1 is set:
+			if arg 2 is not set:
+				make player execute command "/sudo"
+				stop
+			else:
+				make player-argument execute command "%arg 2%"
+				log "%player% executed /sudo %arg 1% %arg 2%" to "Logs/StaffCommands/%player's uuid%"
